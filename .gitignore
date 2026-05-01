@@ -1,5 +1,7 @@
 tst
 ignore
+entrada
+saida
 ted.exe
 *.exe
 *.hfd
