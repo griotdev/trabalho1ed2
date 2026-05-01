@@ -6,22 +6,25 @@ void geo_calc_endereco(double qx, double qy, double qw, double qh,
                        char face, int num, double *rx, double *ry) {
     if (rx == NULL || ry == NULL) return;
 
+    double se_x = qx + qw;
+    double se_y = qy + qh;
+
     switch (face) {
         case 'S':
-            *rx = qx + (double)num;
-            *ry = qy;
-            break;
-        case 'N':
-            *rx = qx + (double)num;
-            *ry = qy + qh;
+            *rx = se_x - (double)num;
+            *ry = se_y;
             break;
         case 'L':
-            *rx = qx;
-            *ry = qy + (double)num;
+            *rx = se_x;
+            *ry = se_y - (double)num;
+            break;
+        case 'N':
+            *rx = se_x - (double)num;
+            *ry = qy;
             break;
         case 'O':
-            *rx = qx + qw;
-            *ry = qy + (double)num;
+            *rx = qx;
+            *ry = se_y - (double)num;
             break;
         default:
             *rx = qx;

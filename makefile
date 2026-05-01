@@ -31,7 +31,7 @@ src/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 # ========== testes unitários ==========
-tstall: tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry
+tstall: tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry tst_geo_calc tst_svg
 	@echo "===== Executando testes ====="
 	./tst_hashfile
 	./tst_quadra
@@ -39,6 +39,8 @@ tstall: tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry
 	./tst_geo
 	./tst_pm
 	./tst_qry
+	./tst_geo_calc
+	./tst_svg
 	@echo "===== Todos os testes passaram ====="
 
 tst_hashfile: tst/t_hashfile.c src/hashfile.c $(UNITY)
@@ -59,10 +61,16 @@ tst_pm: tst/t_pm.c src/pm.c src/habitante.c src/hashfile.c $(UNITY)
 tst_qry: tst/t_qry.c src/qry.c src/geo.c src/pm.c src/quadra.c src/habitante.c src/hashfile.c src/svg.c src/geo_calc.c $(UNITY)
 	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
 
+tst_geo_calc: tst/t_geo_calc.c src/geo_calc.c $(UNITY)
+	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
+
+tst_svg: tst/t_svg.c src/svg.c $(UNITY)
+	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
+
 # ========== limpeza ==========
 clean:
 	-del /Q src\*.o 2>nul
-	-del /Q ted.exe tst_hashfile.exe tst_quadra.exe tst_habitante.exe tst_geo.exe tst_pm.exe tst_qry.exe 2>nul
+	-del /Q ted.exe tst_hashfile.exe tst_quadra.exe tst_habitante.exe tst_geo.exe tst_pm.exe tst_qry.exe tst_geo_calc.exe tst_svg.exe 2>nul
 	-del /Q *.hf *.hfd 2>nul
 
 .PHONY: tstall clean
