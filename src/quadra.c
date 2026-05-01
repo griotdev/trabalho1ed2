@@ -87,6 +87,18 @@ const char *quadra_cstrk(Quadra q) { return q == NULL ? NULL : q->cstrk; }
 
 /* ========== Serialização ========== */
 
+int quadra_sizeof_registro(void) {
+    return (int)sizeof(struct Quadra_s);
+}
+
+int quadra_offset_chave(void) {
+    return 0; /* cep é o primeiro campo */
+}
+
+int quadra_tam_chave(void) {
+    return QUADRA_CEP_TAM;
+}
+
 /*
  * Serializa a quadra para um buffer de tam bytes.
  * O buffer deve ter pelo menos sizeof(struct Quadra_s) bytes.

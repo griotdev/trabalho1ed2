@@ -23,6 +23,9 @@ const char *quadra_cfill(Quadra q);
 const char *quadra_cstrk(Quadra q);
 
 /* Serialização para hashfile */
+int    quadra_sizeof_registro(void);  /* tamanho do registro em bytes */
+int    quadra_offset_chave(void);     /* offset do CEP no registro (= 0) */
+int    quadra_tam_chave(void);        /* tamanho do CEP em bytes (= 20) */
 void   quadra_serializar(Quadra q, void *buf, int tam);
 Quadra quadra_desserializar(const void *buf);
 

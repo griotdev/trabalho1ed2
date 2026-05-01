@@ -31,11 +31,12 @@ src/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 # ========== testes unitários ==========
-tstall: tst_hashfile tst_quadra tst_habitante
+tstall: tst_hashfile tst_quadra tst_habitante tst_geo
 	@echo "===== Executando testes ====="
 	./tst_hashfile
 	./tst_quadra
 	./tst_habitante
+	./tst_geo
 	@echo "===== Todos os testes passaram ====="
 
 tst_hashfile: tst/t_hashfile.c src/hashfile.c $(UNITY)
@@ -47,12 +48,14 @@ tst_quadra: tst/t_quadra.c src/quadra.c $(UNITY)
 tst_habitante: tst/t_habitante.c src/habitante.c $(UNITY)
 	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
 
+tst_geo: tst/t_geo.c src/geo.c src/quadra.c src/hashfile.c $(UNITY)
+	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
 
 
 # ========== limpeza ==========
 clean:
 	-del /Q src\*.o 2>nul
-	-del /Q ted.exe tst_hashfile.exe tst_quadra.exe tst_habitante.exe 2>nul
+	-del /Q ted.exe tst_hashfile.exe tst_quadra.exe tst_habitante.exe tst_geo.exe 2>nul
 	-del /Q *.hf *.hfd 2>nul
 
 .PHONY: tstall clean
