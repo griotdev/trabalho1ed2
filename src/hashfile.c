@@ -4,25 +4,6 @@
 #include <string.h>
 #include <stdint.h>
 
-/*
- * Hashfile estático em disco.
- *
- * Layout do arquivo .hf:
- *   [Cabeçalho]  (sizeof(HFCabecalho) bytes, no offset 0)
- *   [Tabela]     (numBuckets * sizeof(long), no offset offsetTable)
- *   [Bucket 0]   (tamBloco bytes, no offset offsetBuckets)
- *   [Bucket 1]   (tamBloco bytes)
- *   ...
- *
- * Cada bucket/bloco:
- *   [ocupados (int)]  — quantos registros estão neste bucket
- *   [reg0][reg1]...[regN]  — registros de tamRegistro bytes cada
- *
- * Capacidade por bucket = (tamBloco - sizeof(int)) / tamRegistro
- */
-
-/* ========== Estruturas internas (ponteiro opaco) ========== */
-
 typedef struct {
     int numBuckets;
     int tamRegistro;
@@ -31,21 +12,15 @@ typedef struct {
     int tamChave;
     long offsetTable;
     long offsetBuckets;
-    long offsetOverflow;  /* -1 se não usado */
+    long offsetOverflow;
 } HFCabecalho;
 
 struct HashFile_s {
     FILE       *fp;
     HFCabecalho cab;
-    int         capacidade;  /* registros por bucket */
+    int         capacidade;
 };
 
-/* ========== Funções auxiliares privadas ========== */
-
-/**
- * Função de hash genérica para chaves de tamChave bytes.
- * Usa FNV-1a para strings/bytes arbitrários.
- */
 static unsigned int hash_bytes(const void *dados, int tam) {
     const unsigned char *p = (const unsigned char *)dados;
     unsigned int h = 2166136261u;
@@ -56,31 +31,19 @@ static unsigned int hash_bytes(const void *dados, int tam) {
     return h;
 }
 
-/**
- * Calcula o índice do bucket para uma chave.
- */
 static int indice_bucket(const HashFile hf, const void *chave) {
     unsigned int h = hash_bytes(chave, hf->cab.tamChave);
     return (int)(h % (unsigned int)hf->cab.numBuckets);
 }
 
-/**
- * Retorna o offset no arquivo onde começa o bucket de índice idx.
- */
 static long offset_bucket(const HashFile hf, int idx) {
     return hf->cab.offsetBuckets + (long)idx * (long)hf->cab.tamBloco;
 }
 
-/**
- * Extrai a chave de um registro.
- */
 static const void *extrair_chave(const HashFile hf, const void *registro) {
     return (const char *)registro + hf->cab.offsetChave;
 }
 
-/**
- * Lê o contador de ocupados de um bucket.
- */
 static int ler_ocupados(const HashFile hf, int idx) {
     int ocupados = 0;
     fseek(hf->fp, offset_bucket(hf, idx), SEEK_SET);
@@ -88,18 +51,12 @@ static int ler_ocupados(const HashFile hf, int idx) {
     return ocupados;
 }
 
-/**
- * Escreve o contador de ocupados de um bucket.
- */
 static void escrever_ocupados(const HashFile hf, int idx, int ocupados) {
     fseek(hf->fp, offset_bucket(hf, idx), SEEK_SET);
     fwrite(&ocupados, sizeof(int), 1, hf->fp);
     fflush(hf->fp);
 }
 
-/**
- * Lê o registro na posição pos dentro do bucket idx.
- */
 static void ler_registro(const HashFile hf, int idx, int pos, void *saida) {
     long off = offset_bucket(hf, idx) + (long)sizeof(int)
                + (long)pos * (long)hf->cab.tamRegistro;
@@ -107,9 +64,6 @@ static void ler_registro(const HashFile hf, int idx, int pos, void *saida) {
     fread(saida, (size_t)hf->cab.tamRegistro, 1, hf->fp);
 }
 
-/**
- * Escreve o registro na posição pos dentro do bucket idx.
- */
 static void escrever_registro(const HashFile hf, int idx, int pos,
                               const void *registro) {
     long off = offset_bucket(hf, idx) + (long)sizeof(int)
@@ -119,10 +73,6 @@ static void escrever_registro(const HashFile hf, int idx, int pos,
     fflush(hf->fp);
 }
 
-/**
- * Procura uma chave dentro de um bucket.
- * Retorna a posição (0..ocupados-1) ou -1 se não encontrou.
- */
 static int buscar_no_bucket(const HashFile hf, int idx, const void *chave) {
     int ocupados = ler_ocupados(hf, idx);
     char *buf = (char *)malloc((size_t)hf->cab.tamRegistro);
@@ -139,8 +89,6 @@ static int buscar_no_bucket(const HashFile hf, int idx, const void *chave) {
     free(buf);
     return -1;
 }
-
-/* ========== API pública ========== */
 
 HashFile hf_criar(const char *caminho, int num_buckets, int tam_registro,
                   int tam_bloco, int offset_chave, int tam_chave) {
@@ -164,7 +112,6 @@ HashFile hf_criar(const char *caminho, int num_buckets, int tam_registro,
     hf->fp = fp;
     hf->capacidade = capacidade;
 
-    /* Montar cabeçalho */
     hf->cab.numBuckets    = num_buckets;
     hf->cab.tamRegistro   = tam_registro;
     hf->cab.tamBloco      = tam_bloco;
@@ -175,18 +122,15 @@ HashFile hf_criar(const char *caminho, int num_buckets, int tam_registro,
                             + (long)num_buckets * (long)sizeof(long);
     hf->cab.offsetOverflow = -1;
 
-    /* Escrever cabeçalho */
     fseek(fp, 0, SEEK_SET);
     fwrite(&hf->cab, sizeof(HFCabecalho), 1, fp);
 
-    /* Escrever tabela de offsets dos buckets */
     fseek(fp, hf->cab.offsetTable, SEEK_SET);
     for (int i = 0; i < num_buckets; i++) {
         long off = offset_bucket(hf, i);
         fwrite(&off, sizeof(long), 1, fp);
     }
 
-    /* Inicializar cada bucket com 0 ocupados + espaço zerado */
     char *bloco_vazio = (char *)calloc(1, (size_t)tam_bloco);
     if (bloco_vazio == NULL) {
         fclose(fp);
@@ -217,7 +161,6 @@ HashFile hf_abrir(const char *caminho) {
 
     hf->fp = fp;
 
-    /* Ler cabeçalho */
     fseek(fp, 0, SEEK_SET);
     if (fread(&hf->cab, sizeof(HFCabecalho), 1, fp) != 1) {
         fclose(fp);
@@ -241,17 +184,15 @@ bool hf_inserir(HashFile hf, const void *registro) {
     const void *chave = extrair_chave(hf, registro);
     int idx = indice_bucket(hf, chave);
 
-    /* Verificar duplicidade */
     if (buscar_no_bucket(hf, idx, chave) >= 0) {
         return false;
     }
 
     int ocupados = ler_ocupados(hf, idx);
     if (ocupados >= hf->capacidade) {
-        return false;  /* bucket cheio */
+        return false;
     }
 
-    /* Inserir no final */
     escrever_registro(hf, idx, ocupados, registro);
     escrever_ocupados(hf, idx, ocupados + 1);
     return true;
@@ -277,7 +218,6 @@ bool hf_remover(HashFile hf, const void *chave) {
 
     int ocupados = ler_ocupados(hf, idx);
 
-    /* Mover o último registro para a posição removida (se não for o último) */
     if (pos < ocupados - 1) {
         char *ultimo = (char *)malloc((size_t)hf->cab.tamRegistro);
         if (ultimo == NULL) return false;
@@ -294,8 +234,6 @@ void hf_dump(HashFile hf, FILE *saida) {
     if (hf == NULL || saida == NULL) return;
 
     fprintf(saida, "DUMP\n");
-
-    /* Cabeçalho */
     fprintf(saida, "*Dump cabecalho\n");
     fprintf(saida, "numBucketsd %d \n", hf->cab.numBuckets);
     fprintf(saida, "sizeRecordd %d \n", hf->cab.tamRegistro);
@@ -306,14 +244,12 @@ void hf_dump(HashFile hf, FILE *saida) {
     fprintf(saida, "offsetBuckets %ld \n", hf->cab.offsetBuckets);
     fprintf(saida, "offsetOverflow %ld\n", hf->cab.offsetOverflow);
 
-    /* Tabela */
     fprintf(saida, "* Dump table\n");
     for (int i = 0; i < hf->cab.numBuckets; i++) {
         long off = offset_bucket(hf, i);
         fprintf(saida, "[%d] %ld\n", i, off);
     }
 
-    /* Buckets */
     fprintf(saida, "*Dump buckets\n");
     char *buf = (char *)malloc((size_t)hf->cab.tamRegistro);
     if (buf == NULL) return;
@@ -324,21 +260,17 @@ void hf_dump(HashFile hf, FILE *saida) {
         for (int r = 0; r < ocupados; r++) {
             ler_registro(hf, b, r, buf);
 
-            /* Imprimir flag ocupado e chave (int) */
             fprintf(saida, "1 | ");
 
-            /* Chave como inteiro (se tamChave == 4) ou hex */
             if (hf->cab.tamChave == (int)sizeof(int)) {
                 int chave_int;
                 memcpy(&chave_int, buf + hf->cab.offsetChave, sizeof(int));
                 fprintf(saida, "%d", chave_int);
             } else {
-                /* Chave como string */
                 fprintf(saida, "%.*s", hf->cab.tamChave,
                         buf + hf->cab.offsetChave);
             }
 
-            /* Dados restantes como string (entre pipes) */
             fprintf(saida, " | ");
             for (int j = 0; j < hf->cab.tamRegistro; j++) {
                 unsigned char c = (unsigned char)buf[j];

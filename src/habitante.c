@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ========== Tamanhos dos campos ========== */
-
 #define HAB_CPF_TAM       15
 #define HAB_NOME_TAM      50
 #define HAB_SOBRENOME_TAM 50
@@ -13,7 +11,6 @@
 #define HAB_FACE_TAM       2
 #define HAB_COMPL_TAM     20
 
-/* Struct interna — NÃO exposta no .h (ponteiro opaco) */
 struct Habitante_s {
     char cpf[HAB_CPF_TAM];
     char nome[HAB_NOME_TAM];
@@ -26,8 +23,6 @@ struct Habitante_s {
     int  num;
     char compl[HAB_COMPL_TAM];
 };
-
-/* ========== Construtor / Destrutor ========== */
 
 Habitante habitante_criar(const char *cpf, const char *nome,
                           const char *sobrenome, char sexo,
@@ -52,8 +47,6 @@ void habitante_destruir(Habitante h) {
     free(h);
 }
 
-/* ========== Getters básicos ========== */
-
 const char *habitante_cpf(Habitante h) {
     return h == NULL ? NULL : h->cpf;
 }
@@ -73,8 +66,6 @@ char habitante_sexo(Habitante h) {
 const char *habitante_nasc(Habitante h) {
     return h == NULL ? NULL : h->nasc;
 }
-
-/* ========== Endereço (morador) ========== */
 
 int habitante_e_morador(Habitante h) {
     return h == NULL ? 0 : h->e_morador;
@@ -124,7 +115,17 @@ const char *habitante_compl(Habitante h) {
     return h == NULL ? NULL : h->compl;
 }
 
-/* ========== Serialização ========== */
+int habitante_sizeof_registro(void) {
+    return (int)sizeof(struct Habitante_s);
+}
+
+int habitante_offset_chave(void) {
+    return 0;
+}
+
+int habitante_tam_chave(void) {
+    return HAB_CPF_TAM;
+}
 
 void habitante_serializar(Habitante h, void *buf, int tam) {
     if (h == NULL || buf == NULL) return;
@@ -140,7 +141,6 @@ Habitante habitante_desserializar(const void *buf) {
     if (h == NULL) return NULL;
 
     memcpy(h, buf, sizeof(struct Habitante_s));
-    /* Garantir null-terminadores */
     h->cpf[HAB_CPF_TAM - 1] = '\0';
     h->nome[HAB_NOME_TAM - 1] = '\0';
     h->sobrenome[HAB_SOBRENOME_TAM - 1] = '\0';

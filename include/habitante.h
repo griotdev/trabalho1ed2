@@ -34,6 +34,9 @@ int         habitante_num(Habitante h);
 const char *habitante_compl(Habitante h);
 
 /* Serialização para hashfile */
+int        habitante_sizeof_registro(void);
+int        habitante_offset_chave(void);
+int        habitante_tam_chave(void);
 void       habitante_serializar(Habitante h, void *buf, int tam);
 Habitante  habitante_desserializar(const void *buf);
 
