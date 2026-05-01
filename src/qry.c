@@ -387,7 +387,10 @@ void qry_processar(const char *caminho,
     if (caminho == NULL || hf_quadras == NULL || hf_habitantes == NULL) return;
 
     FILE *fp = fopen(caminho, "r");
-    if (fp == NULL) return;
+    if (fp == NULL) {
+        fprintf(stderr, "Erro ao abrir arquivo QRY: %s\n", caminho);
+        return;
+    }
 
     char linha[512];
 

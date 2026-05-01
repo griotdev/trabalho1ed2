@@ -9,7 +9,10 @@ void geo_processar(const char *caminho, HashFile hf_quadras) {
     if (caminho == NULL || hf_quadras == NULL) return;
 
     FILE *fp = fopen(caminho, "r");
-    if (fp == NULL) return;
+    if (fp == NULL) {
+        fprintf(stderr, "Erro ao abrir arquivo GEO: %s\n", caminho);
+        return;
+    }
 
     double est_sw = 1.0;
     char   est_cfill[16];
@@ -33,7 +36,8 @@ void geo_processar(const char *caminho, HashFile hf_quadras) {
         if (strcmp(cmd, "cq") == 0) {
             char cfill[16], cstrk[16];
             double sw;
-            if (sscanf(linha, "cq %lf %15s %15s", &sw, cfill, cstrk) == 3) {
+            if (sscanf(linha, "cq %lfpx %15s %15s", &sw, cfill, cstrk) == 3 ||
+                sscanf(linha, "cq %lf %15s %15s", &sw, cfill, cstrk) == 3) {
                 est_sw = sw;
                 strncpy(est_cfill, cfill, sizeof(est_cfill) - 1);
                 est_cfill[sizeof(est_cfill) - 1] = '\0';

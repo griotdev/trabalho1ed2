@@ -9,7 +9,10 @@ void pm_processar(const char *caminho, HashFile hf_habitantes) {
     if (caminho == NULL || hf_habitantes == NULL) return;
 
     FILE *fp = fopen(caminho, "r");
-    if (fp == NULL) return;
+    if (fp == NULL) {
+        fprintf(stderr, "Erro ao abrir arquivo PM: %s\n", caminho);
+        return;
+    }
 
     char linha[512];
     int tam_reg = habitante_sizeof_registro();

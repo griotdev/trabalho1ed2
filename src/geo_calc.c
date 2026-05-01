@@ -10,21 +10,21 @@ void geo_calc_endereco(double qx, double qy, double qw, double qh,
     double se_y = qy + qh;
 
     switch (face) {
-        case 'S':
-            *rx = se_x - (double)num;
-            *ry = se_y;
-            break;
-        case 'L':
-            *rx = se_x;
-            *ry = se_y - (double)num;
-            break;
-        case 'N':
+        case 'S': // Face superior (top)
             *rx = se_x - (double)num;
             *ry = qy;
             break;
-        case 'O':
+        case 'N': // Face inferior (bottom)
+            *rx = se_x - (double)num;
+            *ry = se_y;
+            break;
+        case 'L': // Face direita (right), partindo do Sul (topo) para o Norte (baixo)
+            *rx = se_x;
+            *ry = qy + (double)num;
+            break;
+        case 'O': // Face esquerda (left), partindo do Sul (topo) para o Norte (baixo)
             *rx = qx;
-            *ry = se_y - (double)num;
+            *ry = qy + (double)num;
             break;
         default:
             *rx = qx;
