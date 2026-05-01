@@ -17,14 +17,14 @@ void tearDown(void) {
     remove(HF_TESTE);
 }
 
-/* Cria um arquivo .geo temporário */
+
 static void criar_geo(const char *conteudo) {
     FILE *f = fopen(GEO_TESTE, "w");
     fprintf(f, "%s", conteudo);
     fclose(f);
 }
 
-/* ========== Testes ========== */
+
 
 void test_geo_quadra_simples(void) {
     criar_geo(
@@ -39,7 +39,7 @@ void test_geo_quadra_simples(void) {
 
     geo_processar(GEO_TESTE, hf);
 
-    /* Buscar cep01 */
+    
     char chave[20];
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep01", sizeof(chave));
@@ -56,7 +56,7 @@ void test_geo_quadra_simples(void) {
     TEST_ASSERT_EQUAL_DOUBLE(40.0, quadra_h(q));
     quadra_destruir(q);
 
-    /* Buscar cep02 */
+    
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep02", sizeof(chave));
     TEST_ASSERT_TRUE(hf_buscar(hf, chave, buf));
@@ -82,7 +82,7 @@ void test_geo_com_estilo(void) {
                            quadra_offset_chave(), quadra_tam_chave());
     geo_processar(GEO_TESTE, hf);
 
-    /* cep10 deve ter estilo red/blue */
+    
     char chave[20], buf[256];
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep10", sizeof(chave));
@@ -94,7 +94,7 @@ void test_geo_com_estilo(void) {
     TEST_ASSERT_EQUAL_DOUBLE(2.5, quadra_sw(q));
     quadra_destruir(q);
 
-    /* cep20 deve ter estilo green/yellow */
+    
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep20", sizeof(chave));
     TEST_ASSERT_TRUE(hf_buscar(hf, chave, buf));
@@ -115,7 +115,7 @@ void test_geo_arquivo_vazio(void) {
                            quadra_offset_chave(), quadra_tam_chave());
     geo_processar(GEO_TESTE, hf);
 
-    /* Nenhum registro inserido */
+    
     char chave[20], buf[256];
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep01", sizeof(chave));

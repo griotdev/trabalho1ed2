@@ -10,16 +10,7 @@
 #include "qry.h"
 #include "svg.h"
 
-/**
- * Ponto de entrada do executável ted.
- *
- * Argumentos:
- *   -e  diretório de entrada
- *   -f  arquivo .geo
- *   -pm arquivo .pm
- *   -q  arquivo .qry
- *   -o  diretório de saída
- */
+
 
 static void extrair_nome_sem_ext(const char *arquivo, char *saida, int tam) {
     const char *base = strrchr(arquivo, '/');
@@ -79,7 +70,7 @@ int main(int argc, char *argv[]) {
         dir_entrada = ".";
     }
 
-    /* Montar caminhos completos */
+    
     char caminho_geo[512], caminho_pm[512], caminho_qry[512];
     snprintf(caminho_geo, sizeof(caminho_geo), "%s/%s", dir_entrada, arq_geo);
 
@@ -88,13 +79,13 @@ int main(int argc, char *argv[]) {
     if (arq_qry != NULL)
         snprintf(caminho_qry, sizeof(caminho_qry), "%s/%s", dir_entrada, arq_qry);
 
-    /* Extrair nomes base */
+    
     char nome_geo[128], nome_qry[128];
     extrair_nome_sem_ext(arq_geo, nome_geo, sizeof(nome_geo));
     if (arq_qry != NULL)
         extrair_nome_sem_ext(arq_qry, nome_qry, sizeof(nome_qry));
 
-    /* Caminhos de saída */
+    
     char caminho_hf_q[512], caminho_hf_h[512];
     char caminho_hfd_q[512], caminho_hfd_h[512];
     char caminho_svg[512], caminho_txt[512];
@@ -112,7 +103,7 @@ int main(int argc, char *argv[]) {
         caminho_txt[0] = '\0';
     }
 
-    /* Criar hashfiles */
+    
     int tam_q = quadra_sizeof_registro();
     HashFile hf_quadras = hf_criar(caminho_hf_q, 16, tam_q, 4096,
                                    quadra_offset_chave(), quadra_tam_chave());
@@ -130,14 +121,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    /* Processar .geo */
+    
     geo_processar(caminho_geo, hf_quadras);
 
-    /* Processar .pm */
+    
     if (arq_pm != NULL)
         pm_processar(caminho_pm, hf_habitantes);
 
-    /* Processar .qry */
+    
     FILE *txt = NULL;
     if (arq_qry != NULL && caminho_txt[0] != '\0') {
         txt = fopen(caminho_txt, "w");
@@ -145,7 +136,7 @@ int main(int argc, char *argv[]) {
 
     FILE *svg_f = svg_abrir(caminho_svg, 1500, 1500);
 
-    /* Desenhar quadras no SVG */
+    
     hf_iterar(hf_quadras, desenhar_quadras, svg_f);
 
     if (arq_qry != NULL) {
@@ -156,14 +147,14 @@ int main(int argc, char *argv[]) {
 
     if (txt != NULL) fclose(txt);
 
-    /* Gerar dumps .hfd */
+    
     FILE *hfd_q = fopen(caminho_hfd_q, "w");
     if (hfd_q != NULL) { hf_dump(hf_quadras, hfd_q); fclose(hfd_q); }
 
     FILE *hfd_h = fopen(caminho_hfd_h, "w");
     if (hfd_h != NULL) { hf_dump(hf_habitantes, hfd_h); fclose(hfd_h); }
 
-    /* Fechar hashfiles */
+    
     hf_fechar(hf_quadras);
     hf_fechar(hf_habitantes);
 

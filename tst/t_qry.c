@@ -77,7 +77,7 @@ void test_qry_comandos(void) {
     fclose(svg);
     fclose(txt);
 
-    /* Verificacoes basicas do TXT gerado */
+    
     FILE *f = fopen(TXT_TESTE, "r");
     TEST_ASSERT_NOT_NULL(f);
     char buf[1024];

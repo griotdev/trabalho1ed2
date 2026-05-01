@@ -6,7 +6,7 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-/* ========== Criação e getters ========== */
+
 
 void test_quadra_criar(void) {
     Quadra q = quadra_criar("cep01", 10.0, 20.0, 30.0, 40.0);
@@ -36,7 +36,7 @@ void test_quadra_getters_null(void) {
     TEST_ASSERT_EQUAL_DOUBLE(0.0, quadra_h(NULL));
 }
 
-/* ========== Estilo visual ========== */
+
 
 void test_quadra_estilo_padrao(void) {
     Quadra q = quadra_criar("cep02", 0, 0, 10, 10);
@@ -56,19 +56,19 @@ void test_quadra_set_estilo(void) {
     quadra_destruir(q);
 }
 
-/* ========== Serialização ========== */
+
 
 void test_quadra_serializar_desserializar(void) {
     Quadra q = quadra_criar("cep_teste", 100.5, 200.3, 50.0, 75.0);
     quadra_set_estilo(q, 3.0, "green", "yellow");
 
-    /* Serializar: usamos sizeof(struct) estimado — precisamos do tamanho real */
-    /* Como é ponteiro opaco, usamos o tamanho do registro que o hashfile espera */
+    
+    
     char buf[256];
     memset(buf, 0, sizeof(buf));
     quadra_serializar(q, buf, sizeof(buf));
 
-    /* Desserializar */
+    
     Quadra q2 = quadra_desserializar(buf);
     TEST_ASSERT_NOT_NULL(q2);
     TEST_ASSERT_EQUAL_STRING("cep_teste", quadra_cep(q2));

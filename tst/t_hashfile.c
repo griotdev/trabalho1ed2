@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Caminho do arquivo de teste */
+
 static const char *HF_TESTE = "tst_hf_temp.hf";
 
 void setUp(void) {}
@@ -14,7 +14,7 @@ void tearDown(void) {
     remove(HF_TESTE);
 }
 
-/* ========== Testes de criação ========== */
+
 
 void test_hf_criar_basico(void) {
     HashFile hf = hf_criar(HF_TESTE, 4, 32, 512, 0, 4);
@@ -30,9 +30,9 @@ void test_hf_criar_params_invalidos(void) {
     TEST_ASSERT_NULL(hf_criar(HF_TESTE, 4, 32, 0, 0, 4));
 }
 
-/* ========== Testes de inserção e busca ========== */
 
-/* Registro de teste: chave int (4 bytes) + payload de 28 bytes */
+
+
 typedef struct {
     int    chave;
     char   dados[28];
@@ -51,7 +51,7 @@ void test_hf_inserir_e_buscar(void) {
     TEST_ASSERT_TRUE(hf_inserir(hf, &r1));
     TEST_ASSERT_TRUE(hf_inserir(hf, &r2));
 
-    /* Buscar */
+    
     RegTeste saida;
     int chave_busca = 100;
     TEST_ASSERT_TRUE(hf_buscar(hf, &chave_busca, &saida));
@@ -62,7 +62,7 @@ void test_hf_inserir_e_buscar(void) {
     TEST_ASSERT_TRUE(hf_buscar(hf, &chave_busca, &saida));
     TEST_ASSERT_EQUAL_INT(200, saida.chave);
 
-    /* Buscar chave inexistente */
+    
     chave_busca = 999;
     TEST_ASSERT_FALSE(hf_buscar(hf, &chave_busca, &saida));
 
@@ -77,12 +77,12 @@ void test_hf_inserir_duplicada(void) {
     strncpy(r.dados, "original", sizeof(r.dados));
 
     TEST_ASSERT_TRUE(hf_inserir(hf, &r));
-    TEST_ASSERT_FALSE(hf_inserir(hf, &r));  /* duplicada */
+    TEST_ASSERT_FALSE(hf_inserir(hf, &r));  
 
     hf_fechar(hf);
 }
 
-/* ========== Teste de remoção ========== */
+
 
 void test_hf_remover(void) {
     HashFile hf = hf_criar(HF_TESTE, 4, sizeof(RegTeste), 512, 0, sizeof(int));
@@ -99,15 +99,15 @@ void test_hf_remover(void) {
     hf_inserir(hf, &r2);
     hf_inserir(hf, &r3);
 
-    /* Remover r2 */
+    
     int chave = 20;
     TEST_ASSERT_TRUE(hf_remover(hf, &chave));
 
-    /* r2 não existe mais */
+    
     RegTeste saida;
     TEST_ASSERT_FALSE(hf_buscar(hf, &chave, &saida));
 
-    /* r1 e r3 ainda existem */
+    
     chave = 10;
     TEST_ASSERT_TRUE(hf_buscar(hf, &chave, &saida));
     TEST_ASSERT_EQUAL_INT(10, saida.chave);
@@ -116,17 +116,17 @@ void test_hf_remover(void) {
     TEST_ASSERT_TRUE(hf_buscar(hf, &chave, &saida));
     TEST_ASSERT_EQUAL_INT(30, saida.chave);
 
-    /* Remover inexistente */
+    
     chave = 999;
     TEST_ASSERT_FALSE(hf_remover(hf, &chave));
 
     hf_fechar(hf);
 }
 
-/* ========== Teste de persistência (fechar e reabrir) ========== */
+
 
 void test_hf_persistencia(void) {
-    /* Criar e inserir */
+    
     HashFile hf = hf_criar(HF_TESTE, 4, sizeof(RegTeste), 512, 0, sizeof(int));
     TEST_ASSERT_NOT_NULL(hf);
 
@@ -135,7 +135,7 @@ void test_hf_persistencia(void) {
     TEST_ASSERT_TRUE(hf_inserir(hf, &r));
     hf_fechar(hf);
 
-    /* Reabrir e verificar */
+    
     hf = hf_abrir(HF_TESTE);
     TEST_ASSERT_NOT_NULL(hf);
     TEST_ASSERT_EQUAL_INT(2, hf_num_buckets(hf));
@@ -149,7 +149,7 @@ void test_hf_persistencia(void) {
     hf_fechar(hf);
 }
 
-/* ========== Teste com chave string ========== */
+
 
 typedef struct {
     char   cep[20];
@@ -158,7 +158,7 @@ typedef struct {
 
 void test_hf_chave_string(void) {
     HashFile hf = hf_criar(HF_TESTE, 8, sizeof(RegQuadra),
-                           1024, 0, 20);  /* chave = cep (20 bytes) */
+                           1024, 0, 20);  
     TEST_ASSERT_NOT_NULL(hf);
 
     RegQuadra q1;
@@ -174,7 +174,7 @@ void test_hf_chave_string(void) {
     TEST_ASSERT_TRUE(hf_inserir(hf, &q1));
     TEST_ASSERT_TRUE(hf_inserir(hf, &q2));
 
-    /* Buscar por CEP */
+    
     char chave[20];
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep01", sizeof(chave));
@@ -184,7 +184,7 @@ void test_hf_chave_string(void) {
     TEST_ASSERT_EQUAL_STRING("cep01", saida.cep);
     TEST_ASSERT_EQUAL_DOUBLE(10.0, saida.x);
 
-    /* CEP inexistente */
+    
     memset(chave, 0, sizeof(chave));
     strncpy(chave, "cep99", sizeof(chave));
     TEST_ASSERT_FALSE(hf_buscar(hf, chave, &saida));
@@ -192,7 +192,7 @@ void test_hf_chave_string(void) {
     hf_fechar(hf);
 }
 
-/* ========== Teste de dump ========== */
+
 
 void test_hf_dump(void) {
     HashFile hf = hf_criar(HF_TESTE, 2, sizeof(RegTeste), 512, 0, sizeof(int));
@@ -202,13 +202,13 @@ void test_hf_dump(void) {
     strncpy(r.dados, "teste_dump", sizeof(r.dados));
     hf_inserir(hf, &r);
 
-    /* Dump para arquivo temporário */
+    
     FILE *fdump = fopen("tst_hf_temp.hfd", "w");
     TEST_ASSERT_NOT_NULL(fdump);
     hf_dump(hf, fdump);
     fclose(fdump);
 
-    /* Verificar que o dump não está vazio */
+    
     fdump = fopen("tst_hf_temp.hfd", "r");
     TEST_ASSERT_NOT_NULL(fdump);
     char linha[256];
@@ -220,7 +220,7 @@ void test_hf_dump(void) {
     hf_fechar(hf);
 }
 
-/* ========== Teste de iteração ========== */
+
 
 static void contar_callback(const void *registro, void *ctx) {
     (void)registro;
@@ -246,7 +246,7 @@ void test_hf_iterar(void) {
     hf_fechar(hf);
 }
 
-/* ========== Teste NULL safety ========== */
+
 
 void test_hf_null_safety(void) {
     hf_fechar(NULL);

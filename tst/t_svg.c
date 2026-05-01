@@ -32,7 +32,7 @@ void test_svg_fluxo_basico(void) {
     }
     fclose(f);
     
-    /* Header + rect + circle + line + text + closer = 6 lines */
+    
     TEST_ASSERT_EQUAL_INT(6, linhas);
 }
 
@@ -42,7 +42,7 @@ void test_svg_null_safety(void) {
     svg_circulo(NULL, 0,0,0, NULL, NULL, 0);
     svg_linha(NULL, 0,0,0,0, NULL, 0);
     svg_texto(NULL, 0,0, NULL, NULL, 0);
-    svg_texto((FILE*)1, 0,0, NULL, NULL, 0); /* txt null */
+    svg_texto((FILE*)1, 0,0, NULL, NULL, 0); 
     svg_fechar(NULL);
     TEST_PASS();
 }

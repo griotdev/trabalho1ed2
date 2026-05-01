@@ -7,9 +7,9 @@ void tearDown(void) {}
 
 void test_geo_calc_sul(void) {
     double rx, ry;
-    /* qx=10, qy=10, w=100, h=50 -> se_x = 110, se_y = 60 */
+    
     geo_calc_endereco(10.0, 10.0, 100.0, 50.0, 'S', 20, &rx, &ry);
-    /* Sul é o topo (y = qy), indo do Leste (110) para Oeste: x = 110 - 20 = 90.0, y = 10.0 */
+    
     TEST_ASSERT_EQUAL_DOUBLE(90.0, rx);
     TEST_ASSERT_EQUAL_DOUBLE(10.0, ry);
 }
@@ -17,7 +17,7 @@ void test_geo_calc_sul(void) {
 void test_geo_calc_leste(void) {
     double rx, ry;
     geo_calc_endereco(10.0, 10.0, 100.0, 50.0, 'L', 15, &rx, &ry);
-    /* Leste é a direita (x = 110), partindo do Sul (topo, 10) descendo: y = 10 + 15 = 25.0 */
+    
     TEST_ASSERT_EQUAL_DOUBLE(110.0, rx);
     TEST_ASSERT_EQUAL_DOUBLE(25.0, ry);
 }
@@ -25,7 +25,7 @@ void test_geo_calc_leste(void) {
 void test_geo_calc_norte(void) {
     double rx, ry;
     geo_calc_endereco(10.0, 10.0, 100.0, 50.0, 'N', 30, &rx, &ry);
-    /* Norte é a base (y = qy + qh = 60), partindo do Leste (110): x = 110 - 30 = 80.0 */
+    
     TEST_ASSERT_EQUAL_DOUBLE(80.0, rx);
     TEST_ASSERT_EQUAL_DOUBLE(60.0, ry);
 }
@@ -33,7 +33,7 @@ void test_geo_calc_norte(void) {
 void test_geo_calc_oeste(void) {
     double rx, ry;
     geo_calc_endereco(10.0, 10.0, 100.0, 50.0, 'O', 25, &rx, &ry);
-    /* Oeste é a esquerda (x = 10), partindo do Sul (topo, 10) descendo: y = 10 + 25 = 35.0 */
+    
     TEST_ASSERT_EQUAL_DOUBLE(10.0, rx);
     TEST_ASSERT_EQUAL_DOUBLE(35.0, ry);
 }

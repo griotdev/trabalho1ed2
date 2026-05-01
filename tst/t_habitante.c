@@ -6,7 +6,7 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-/* ========== Criação e getters ========== */
+
 
 void test_habitante_criar(void) {
     Habitante h = habitante_criar("12345678901", "Joao", "Silva", 'M', "01/01/2000");
@@ -35,7 +35,7 @@ void test_habitante_getters_null(void) {
     TEST_ASSERT_NULL(habitante_nasc(NULL));
 }
 
-/* ========== Endereço (morador) ========== */
+
 
 void test_habitante_endereco(void) {
     Habitante h = habitante_criar("99988877766", "Maria", "Santos", 'F', "15/06/1990");
@@ -48,7 +48,7 @@ void test_habitante_endereco(void) {
     TEST_ASSERT_EQUAL_INT(45, habitante_num(h));
     TEST_ASSERT_EQUAL_STRING("apto3", habitante_compl(h));
 
-    /* Remover endereço (torna sem-teto) */
+    
     habitante_remover_endereco(h);
     TEST_ASSERT_EQUAL_INT(0, habitante_e_morador(h));
     TEST_ASSERT_EQUAL_STRING("", habitante_cep(h));
@@ -63,7 +63,7 @@ void test_habitante_mudar_endereco(void) {
     habitante_set_endereco(h, "cep10", "N", 100, "casa");
     TEST_ASSERT_EQUAL_STRING("cep10", habitante_cep(h));
 
-    /* Mudar para outro endereço */
+    
     habitante_set_endereco(h, "cep20", "L", 50, "sobrado");
     TEST_ASSERT_EQUAL_INT(1, habitante_e_morador(h));
     TEST_ASSERT_EQUAL_STRING("cep20", habitante_cep(h));
@@ -74,7 +74,7 @@ void test_habitante_mudar_endereco(void) {
     habitante_destruir(h);
 }
 
-/* ========== Serialização ========== */
+
 
 void test_habitante_serializar_desserializar(void) {
     Habitante h = habitante_criar("55566677788", "Ana", "Oliveira", 'F', "10/12/1995");
