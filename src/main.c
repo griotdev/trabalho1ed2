@@ -57,15 +57,15 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-e") == 0) {
-            if (i + 1 < argc) dir_entrada = argv[++i];
+            if (i + 1 < argc && argv[i+1][0] != '-') dir_entrada = argv[++i];
         } else if (strcmp(argv[i], "-f") == 0) {
-            if (i + 1 < argc) arq_geo = argv[++i];
+            if (i + 1 < argc && argv[i+1][0] != '-') arq_geo = argv[++i];
         } else if (strcmp(argv[i], "-pm") == 0) {
-            if (i + 1 < argc) arq_pm = argv[++i];
+            if (i + 1 < argc && argv[i+1][0] != '-') arq_pm = argv[++i];
         } else if (strcmp(argv[i], "-q") == 0) {
-            if (i + 1 < argc) arq_qry = argv[++i];
+            if (i + 1 < argc && argv[i+1][0] != '-') arq_qry = argv[++i];
         } else if (strcmp(argv[i], "-o") == 0) {
-            if (i + 1 < argc) dir_saida = argv[++i];
+            if (i + 1 < argc && argv[i+1][0] != '-') dir_saida = argv[++i];
         }
     }
 
