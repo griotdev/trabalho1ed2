@@ -94,7 +94,7 @@ static void cmd_rq(const char *cep, HashFile hf_quadras, HashFile hf_hab,
     if (hf_buscar(hf_quadras, chave, buf)) {
         Quadra q = quadra_desserializar(buf);
         if (q != NULL) {
-            double ax = quadra_x(q);
+            double ax = quadra_x(q) + quadra_w(q);
             double ay = quadra_y(q);
 
             CtxRQ ctx;
@@ -144,10 +144,10 @@ static void cmd_pq(const char *cep, HashFile hf_quadras, HashFile hf_hab,
             svg_texto(svg_f, x + w / 2, y - 4, num, "black", 10);
 
             sprintf(num, "%d", ctx.faces[2]);
-            svg_texto(svg_f, x - 12, y + h / 2, num, "black", 10);
+            svg_texto(svg_f, x + w + 4, y + h / 2, num, "black", 10);
 
             sprintf(num, "%d", ctx.faces[3]);
-            svg_texto(svg_f, x + w + 4, y + h / 2, num, "black", 10);
+            svg_texto(svg_f, x - 12, y + h / 2, num, "black", 10);
 
             sprintf(num, "%d", ctx.total);
             svg_texto(svg_f, x + w / 2 - 4, y + h / 2, num, "blue", 12);

@@ -144,7 +144,6 @@ int main(int argc, char *argv[]) {
     if (arq_pm != NULL)
         pm_processar(caminho_pm, hf_habitantes);
 
-    
     FILE *txt = NULL;
     if (arq_qry != NULL && caminho_txt[0] != '\0') {
         txt = fopen(caminho_txt, "w");
@@ -157,13 +156,30 @@ int main(int argc, char *argv[]) {
     bb.max_x += 50;
     bb.max_y += 50;
 
+    char caminho_svg_tmp[520];
+    snprintf(caminho_svg_tmp, sizeof(caminho_svg_tmp), "%s.tmp", caminho_svg);
+    FILE *svg_tmp = NULL;
+
+    if (arq_qry != NULL) {
+        svg_tmp = fopen(caminho_svg_tmp, "w");
+        qry_processar(caminho_qry, hf_quadras, hf_habitantes, svg_tmp, txt);
+        if (svg_tmp != NULL) fclose(svg_tmp);
+    }
+
     FILE *svg_f = svg_abrir(caminho_svg, bb.max_x, bb.max_y);
 
-    
     hf_iterar(hf_quadras, desenhar_quadras, svg_f);
 
     if (arq_qry != NULL) {
-        qry_processar(caminho_qry, hf_quadras, hf_habitantes, svg_f, txt);
+        svg_tmp = fopen(caminho_svg_tmp, "r");
+        if (svg_tmp != NULL) {
+            char buf_tmp[1024];
+            while (fgets(buf_tmp, sizeof(buf_tmp), svg_tmp) != NULL) {
+                fputs(buf_tmp, svg_f);
+            }
+            fclose(svg_tmp);
+            remove(caminho_svg_tmp);
+        }
     }
 
     svg_fechar(svg_f);
