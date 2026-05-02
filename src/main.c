@@ -24,6 +24,22 @@ static void extrair_nome_sem_ext(const char *arquivo, char *saida, int tam) {
     if (ponto != NULL) *ponto = '\0';
 }
 
+typedef struct {
+    double max_x;
+    double max_y;
+} BBox;
+
+static void calcular_bbox(const void *registro, void *ctx) {
+    BBox *bb = (BBox *)ctx;
+    Quadra q = quadra_desserializar(registro);
+    if (q == NULL) return;
+    double xf = quadra_x(q) + quadra_w(q);
+    double yf = quadra_y(q) + quadra_h(q);
+    if (xf > bb->max_x) bb->max_x = xf;
+    if (yf > bb->max_y) bb->max_y = yf;
+    quadra_destruir(q);
+}
+
 static void desenhar_quadras(const void *registro, void *ctx) {
     FILE *svg_f = (FILE *)ctx;
     Quadra q = quadra_desserializar(registro);
@@ -134,7 +150,14 @@ int main(int argc, char *argv[]) {
         txt = fopen(caminho_txt, "w");
     }
 
-    FILE *svg_f = svg_abrir(caminho_svg, 1500, 1500);
+    BBox bb = {0.0, 0.0};
+    hf_iterar(hf_quadras, calcular_bbox, &bb);
+    if (bb.max_x < 100) bb.max_x = 1500;
+    if (bb.max_y < 100) bb.max_y = 1500;
+    bb.max_x += 50;
+    bb.max_y += 50;
+
+    FILE *svg_f = svg_abrir(caminho_svg, bb.max_x, bb.max_y);
 
     
     hf_iterar(hf_quadras, desenhar_quadras, svg_f);
