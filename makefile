@@ -13,6 +13,7 @@ UNITY    = unity/unity.c
 
 ted: $(OBJ_FILES)
 	$(CC) $(CFLAGS) $(INC) -o $(SRC_DIR)/$@ $^ -lm
+	$(CC) $(CFLAGS) $(INC) -o ../ted $^ -lm
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_DIR)
@@ -59,5 +60,6 @@ clean:
 	rm -f $(SRC_DIR)/ted
 	rm -f tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry tst_geo_calc tst_svg
 	rm -f *.hf *.hfd
+	rm -f ../ted
 
 .PHONY: tstall clean
