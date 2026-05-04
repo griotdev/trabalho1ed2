@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void txt_imprimir_habitante(FILE *txt, Habitante h);
+
 typedef struct {
     const char *cep;
     HashFile    hf_hab;
@@ -21,10 +23,14 @@ static void rq_despejar_moradores(const void *registro, void *ctx) {
     if (h == NULL) return;
 
     if (habitante_e_morador(h) && strcmp(habitante_cep(h), c->cep) == 0) {
-        fprintf(c->txt, "%s %s %s\n", habitante_cpf(h),
-                habitante_nome(h), habitante_sobrenome(h));
+        if (c->txt != NULL) fprintf(c->txt, "Morador removido da quadra %s\n", c->cep);
+        txt_imprimir_habitante(c->txt, h);
 
         habitante_remover_endereco(h);
+        if (c->txt != NULL) {
+            fprintf(c->txt, "Situacao apos remocao: sem-teto\n");
+            fprintf(c->txt, "Endereco apos remocao: inexistente\n");
+        }
         char *buf = (char *)malloc((size_t)c->tam_reg_hab);
         if (buf != NULL) {
             char chave[15];
@@ -67,7 +73,45 @@ typedef struct {
     int total_mor;
     int masc;
     int fem;
+    int masc_mor;
+    int fem_mor;
+    int masc_sem_teto;
+    int fem_sem_teto;
 } CtxCenso;
+
+static double porcentagem(int parte, int total) {
+    return total > 0 ? 100.0 * (double)parte / (double)total : 0.0;
+}
+
+static void txt_imprimir_endereco(FILE *txt, const char *rotulo,
+                                  const char *cep, const char *face,
+                                  int num, const char *compl_) {
+    if (txt == NULL) return;
+
+    fprintf(txt, "%s: %s/%s/%d %s\n", rotulo,
+            cep != NULL ? cep : "",
+            face != NULL ? face : "",
+            num,
+            compl_ != NULL ? compl_ : "");
+}
+
+static void txt_imprimir_habitante(FILE *txt, Habitante h) {
+    if (txt == NULL || h == NULL) return;
+
+    fprintf(txt, "CPF: %s\nNome: %s %s\nSexo: %c\nNascimento: %s\n",
+            habitante_cpf(h), habitante_nome(h), habitante_sobrenome(h),
+            habitante_sexo(h), habitante_nasc(h));
+
+    if (habitante_e_morador(h)) {
+        fprintf(txt, "Situacao atual: morador\n");
+        txt_imprimir_endereco(txt, "Endereco atual",
+                              habitante_cep(h), habitante_face(h),
+                              habitante_num(h), habitante_compl(h));
+    } else {
+        fprintf(txt, "Situacao atual: sem-teto\n");
+        fprintf(txt, "Endereco atual: inexistente\n");
+    }
+}
 
 static void censo_contar(const void *registro, void *ctx) {
     CtxCenso *c = (CtxCenso *)ctx;
@@ -76,8 +120,15 @@ static void censo_contar(const void *registro, void *ctx) {
 
     c->total_hab++;
     if (habitante_e_morador(h)) c->total_mor++;
-    if (habitante_sexo(h) == 'M') c->masc++;
-    else if (habitante_sexo(h) == 'F') c->fem++;
+    if (habitante_sexo(h) == 'M') {
+        c->masc++;
+        if (habitante_e_morador(h)) c->masc_mor++;
+        else c->masc_sem_teto++;
+    } else if (habitante_sexo(h) == 'F') {
+        c->fem++;
+        if (habitante_e_morador(h)) c->fem_mor++;
+        else c->fem_sem_teto++;
+    }
     habitante_destruir(h);
 }
 
@@ -159,24 +210,33 @@ static void cmd_pq(const char *cep, HashFile hf_quadras, HashFile hf_hab,
 }
 
 static void cmd_censo(HashFile hf_hab, FILE *txt) {
+    if (txt == NULL) return;
+
     CtxCenso ctx;
     memset(&ctx, 0, sizeof(ctx));
     hf_iterar(hf_hab, censo_contar, &ctx);
 
     int sem_teto = ctx.total_hab - ctx.total_mor;
+    int sem_teto_genero = ctx.masc_sem_teto + ctx.fem_sem_teto;
     fprintf(txt, "Habitantes: %d\n", ctx.total_hab);
     fprintf(txt, "Moradores: %d (%.2f%%)\n",
-            ctx.total_mor,
-            ctx.total_hab > 0 ? 100.0 * ctx.total_mor / ctx.total_hab : 0.0);
+            ctx.total_mor, porcentagem(ctx.total_mor, ctx.total_hab));
     fprintf(txt, "Sexo M: %d (%.2f%%)\n",
-            ctx.masc,
-            ctx.total_hab > 0 ? 100.0 * ctx.masc / ctx.total_hab : 0.0);
+            ctx.masc, porcentagem(ctx.masc, ctx.total_hab));
     fprintf(txt, "Sexo F: %d (%.2f%%)\n",
-            ctx.fem,
-            ctx.total_hab > 0 ? 100.0 * ctx.fem / ctx.total_hab : 0.0);
+            ctx.fem, porcentagem(ctx.fem, ctx.total_hab));
     fprintf(txt, "Sem-teto: %d (%.2f%%)\n",
-            sem_teto,
-            ctx.total_hab > 0 ? 100.0 * sem_teto / ctx.total_hab : 0.0);
+            sem_teto, porcentagem(sem_teto, ctx.total_hab));
+    fprintf(txt, "Moradores M: %d (%.2f%% dos homens)\n",
+            ctx.masc_mor, porcentagem(ctx.masc_mor, ctx.masc));
+    fprintf(txt, "Moradores F: %d (%.2f%% das mulheres)\n",
+            ctx.fem_mor, porcentagem(ctx.fem_mor, ctx.fem));
+    fprintf(txt, "Sem-teto M: %d (%.2f%% dos homens; %.2f%% dos sem-teto com genero M/F)\n",
+            ctx.masc_sem_teto, porcentagem(ctx.masc_sem_teto, ctx.masc),
+            porcentagem(ctx.masc_sem_teto, sem_teto_genero));
+    fprintf(txt, "Sem-teto F: %d (%.2f%% das mulheres; %.2f%% dos sem-teto com genero M/F)\n",
+            ctx.fem_sem_teto, porcentagem(ctx.fem_sem_teto, ctx.fem),
+            porcentagem(ctx.fem_sem_teto, sem_teto_genero));
 }
 
 static void cmd_hq(const char *cpf, HashFile hf_hab, FILE *txt) {
@@ -191,17 +251,7 @@ static void cmd_hq(const char *cpf, HashFile hf_hab, FILE *txt) {
     if (hf_buscar(hf_hab, chave, buf)) {
         Habitante h = habitante_desserializar(buf);
         if (h != NULL) {
-            fprintf(txt, "CPF: %s\nNome: %s %s\nSexo: %c\nNascimento: %s\n",
-                    habitante_cpf(h), habitante_nome(h),
-                    habitante_sobrenome(h), habitante_sexo(h),
-                    habitante_nasc(h));
-            if (habitante_e_morador(h)) {
-                fprintf(txt, "Endereco: %s/%s/%d %s\n",
-                        habitante_cep(h), habitante_face(h),
-                        habitante_num(h), habitante_compl(h));
-            } else {
-                fprintf(txt, "Sem endereco\n");
-            }
+            txt_imprimir_habitante(txt, h);
             habitante_destruir(h);
         }
     }
@@ -209,7 +259,7 @@ static void cmd_hq(const char *cpf, HashFile hf_hab, FILE *txt) {
 }
 
 static void cmd_nasc(const char *cpf, const char *nome, const char *sobrenome,
-                     char sexo, const char *nasc, HashFile hf_hab) {
+                     char sexo, const char *nasc, HashFile hf_hab, FILE *txt) {
     Habitante h = habitante_criar(cpf, nome, sobrenome, sexo, nasc);
     if (h == NULL) return;
 
@@ -221,6 +271,7 @@ static void cmd_nasc(const char *cpf, const char *nome, const char *sobrenome,
         hf_inserir(hf_hab, buf);
         free(buf);
     }
+    txt_imprimir_habitante(txt, h);
     habitante_destruir(h);
 }
 
@@ -237,16 +288,9 @@ static void cmd_rip(const char *cpf, HashFile hf_quadras, HashFile hf_hab,
     if (hf_buscar(hf_hab, chave, buf)) {
         Habitante h = habitante_desserializar(buf);
         if (h != NULL) {
-            fprintf(txt, "CPF: %s\nNome: %s %s\nSexo: %c\nNascimento: %s\n",
-                    habitante_cpf(h), habitante_nome(h),
-                    habitante_sobrenome(h), habitante_sexo(h),
-                    habitante_nasc(h));
+            txt_imprimir_habitante(txt, h);
 
             if (habitante_e_morador(h)) {
-                fprintf(txt, "Endereco: %s/%s/%d %s\n",
-                        habitante_cep(h), habitante_face(h),
-                        habitante_num(h), habitante_compl(h));
-
                 int tam_q = quadra_sizeof_registro();
                 char *bufq = (char *)malloc((size_t)tam_q);
                 if (bufq != NULL) {
@@ -270,6 +314,7 @@ static void cmd_rip(const char *cpf, HashFile hf_quadras, HashFile hf_hab,
                     free(bufq);
                 }
             }
+            if (txt != NULL) fprintf(txt, "Situacao apos rip: falecido/removido\n");
             habitante_destruir(h);
         }
         hf_remover(hf_hab, chave);
@@ -279,7 +324,8 @@ static void cmd_rip(const char *cpf, HashFile hf_quadras, HashFile hf_hab,
 
 static void cmd_mud(const char *cpf, const char *cep, const char *face,
                     int num, const char *compl_,
-                    HashFile hf_quadras, HashFile hf_hab, FILE *svg_f) {
+                    HashFile hf_quadras, HashFile hf_hab, FILE *svg_f,
+                    FILE *txt) {
     int tam_reg = habitante_sizeof_registro();
     char *buf = (char *)malloc((size_t)tam_reg);
     if (buf == NULL) return;
@@ -291,7 +337,13 @@ static void cmd_mud(const char *cpf, const char *cep, const char *face,
     if (hf_buscar(hf_hab, chave, buf)) {
         Habitante h = habitante_desserializar(buf);
         if (h != NULL) {
+            if (txt != NULL) fprintf(txt, "Habitante antes da mudanca\n");
+            txt_imprimir_habitante(txt, h);
+
             habitante_set_endereco(h, cep, face, num, compl_);
+            if (txt != NULL) fprintf(txt, "Habitante apos a mudanca\n");
+            txt_imprimir_habitante(txt, h);
+
             memset(buf, 0, (size_t)tam_reg);
             habitante_serializar(h, buf, tam_reg);
             hf_remover(hf_hab, chave);
@@ -338,15 +390,9 @@ static void cmd_dspj(const char *cpf, HashFile hf_quadras, HashFile hf_hab,
     if (hf_buscar(hf_hab, chave, buf)) {
         Habitante h = habitante_desserializar(buf);
         if (h != NULL) {
-            fprintf(txt, "CPF: %s\nNome: %s %s\n",
-                    habitante_cpf(h), habitante_nome(h),
-                    habitante_sobrenome(h));
+            txt_imprimir_habitante(txt, h);
 
             if (habitante_e_morador(h)) {
-                fprintf(txt, "Endereco anterior: %s/%s/%d %s\n",
-                        habitante_cep(h), habitante_face(h),
-                        habitante_num(h), habitante_compl(h));
-
                 int tam_q = quadra_sizeof_registro();
                 char *bufq = (char *)malloc((size_t)tam_q);
                 if (bufq != NULL) {
@@ -370,6 +416,10 @@ static void cmd_dspj(const char *cpf, HashFile hf_quadras, HashFile hf_hab,
                 }
 
                 habitante_remover_endereco(h);
+                if (txt != NULL) {
+                    fprintf(txt, "Situacao apos despejo: sem-teto\n");
+                    fprintf(txt, "Endereco apos despejo: inexistente\n");
+                }
                 memset(buf, 0, (size_t)tam_reg);
                 habitante_serializar(h, buf, tam_reg);
                 hf_remover(hf_hab, chave);
@@ -423,7 +473,8 @@ void qry_processar(const char *caminho,
             char cpf[15], nome[50], sobrenome[50], sexo_str[4], nasc[11];
             if (sscanf(linha, "nasc %14s %49s %49s %3s %10s",
                        cpf, nome, sobrenome, sexo_str, nasc) == 5)
-                cmd_nasc(cpf, nome, sobrenome, sexo_str[0], nasc, hf_habitantes);
+                cmd_nasc(cpf, nome, sobrenome, sexo_str[0], nasc,
+                         hf_habitantes, txt);
 
         } else if (strcmp(cmd, "rip") == 0) {
             char cpf[15];
@@ -436,7 +487,7 @@ void qry_processar(const char *caminho,
             if (sscanf(linha, "mud %14s %19s %3s %d %19s",
                        cpf, cep, face, &num, compl) == 5)
                 cmd_mud(cpf, cep, face, num, compl,
-                        hf_quadras, hf_habitantes, svg_f);
+                        hf_quadras, hf_habitantes, svg_f, txt);
 
         } else if (strcmp(cmd, "dspj") == 0) {
             char cpf[15];
