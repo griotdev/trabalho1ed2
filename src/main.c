@@ -55,6 +55,15 @@ static void desenhar_quadras(const void *registro, void *ctx) {
     quadra_destruir(q);
 }
 
+static void gerar_svg_quadras(const char *caminho, double largura,
+                              double altura, HashFile hf_quadras) {
+    FILE *svg_f = svg_abrir(caminho, largura, altura);
+    if (svg_f == NULL) return;
+
+    hf_iterar(hf_quadras, desenhar_quadras, svg_f);
+    svg_fechar(svg_f);
+}
+
 int main(int argc, char *argv[]) {
     char *dir_entrada = NULL;
     char *arq_geo     = NULL;
@@ -104,18 +113,19 @@ int main(int argc, char *argv[]) {
     
     char caminho_hf_q[512], caminho_hf_h[512];
     char caminho_hfd_q[512], caminho_hfd_h[512];
-    char caminho_svg[512], caminho_txt[512];
+    char caminho_svg_geo[512], caminho_svg_qry[512], caminho_txt[512];
 
     snprintf(caminho_hf_q, sizeof(caminho_hf_q), "%s/%s-quadras.hf", dir_saida, nome_geo);
     snprintf(caminho_hf_h, sizeof(caminho_hf_h), "%s/%s-habitantes.hf", dir_saida, nome_geo);
     snprintf(caminho_hfd_q, sizeof(caminho_hfd_q), "%s/%s-quadras.hfd", dir_saida, nome_geo);
     snprintf(caminho_hfd_h, sizeof(caminho_hfd_h), "%s/%s-habitantes.hfd", dir_saida, nome_geo);
+    snprintf(caminho_svg_geo, sizeof(caminho_svg_geo), "%s/%s.svg", dir_saida, nome_geo);
 
     if (arq_qry != NULL) {
-        snprintf(caminho_svg, sizeof(caminho_svg), "%s/%s-%s.svg", dir_saida, nome_geo, nome_qry);
+        snprintf(caminho_svg_qry, sizeof(caminho_svg_qry), "%s/%s-%s.svg", dir_saida, nome_geo, nome_qry);
         snprintf(caminho_txt, sizeof(caminho_txt), "%s/%s-%s.txt", dir_saida, nome_geo, nome_qry);
     } else {
-        snprintf(caminho_svg, sizeof(caminho_svg), "%s/%s.svg", dir_saida, nome_geo);
+        caminho_svg_qry[0] = '\0';
         caminho_txt[0] = '\0';
     }
 
@@ -156,21 +166,20 @@ int main(int argc, char *argv[]) {
     bb.max_x += 50;
     bb.max_y += 50;
 
+    gerar_svg_quadras(caminho_svg_geo, bb.max_x, bb.max_y, hf_quadras);
+
     char caminho_svg_tmp[520];
-    snprintf(caminho_svg_tmp, sizeof(caminho_svg_tmp), "%s.tmp", caminho_svg);
+    snprintf(caminho_svg_tmp, sizeof(caminho_svg_tmp), "%s.tmp", caminho_svg_qry);
     FILE *svg_tmp = NULL;
 
     if (arq_qry != NULL) {
         svg_tmp = fopen(caminho_svg_tmp, "w");
         qry_processar(caminho_qry, hf_quadras, hf_habitantes, svg_tmp, txt);
         if (svg_tmp != NULL) fclose(svg_tmp);
-    }
 
-    FILE *svg_f = svg_abrir(caminho_svg, bb.max_x, bb.max_y);
+        FILE *svg_f = svg_abrir(caminho_svg_qry, bb.max_x, bb.max_y);
+        hf_iterar(hf_quadras, desenhar_quadras, svg_f);
 
-    hf_iterar(hf_quadras, desenhar_quadras, svg_f);
-
-    if (arq_qry != NULL) {
         svg_tmp = fopen(caminho_svg_tmp, "r");
         if (svg_tmp != NULL) {
             char buf_tmp[1024];
@@ -180,9 +189,9 @@ int main(int argc, char *argv[]) {
             fclose(svg_tmp);
             remove(caminho_svg_tmp);
         }
-    }
 
-    svg_fechar(svg_f);
+        svg_fechar(svg_f);
+    }
 
     if (txt != NULL) fclose(txt);
 

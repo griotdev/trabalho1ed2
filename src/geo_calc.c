@@ -11,19 +11,19 @@ void geo_calc_endereco(double qx, double qy, double qw, double qh,
 
     switch (face) {
         case 'S': 
-            *rx = se_x - (double)num;
+            *rx = qx + (double)num;
             *ry = qy;
             break;
         case 'N': 
-            *rx = se_x - (double)num;
+            *rx = qx + (double)num;
             *ry = se_y;
             break;
         case 'L': 
-            *rx = se_x;
+            *rx = qx;
             *ry = qy + (double)num;
             break;
         case 'O': 
-            *rx = qx;
+            *rx = se_x;
             *ry = qy + (double)num;
             break;
         default:
