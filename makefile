@@ -1,5 +1,5 @@
 CC       = gcc
-CFLAGS   = -std=c99 -fstack-protector-all -Wall -Wextra -g -DUNITY_INCLUDE_DOUBLE
+CFLAGS   = -std=c99 -fstack-protector-all -Wall -Wextra -g -ggdb -O0 -Werror=implicit-function-declaration -DUNITY_INCLUDE_DOUBLE
 INC      = -I./unity -I./src -I./include
 
 SRC_DIR  = src
@@ -12,10 +12,10 @@ OBJ_FILES = $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 UNITY    = unity/unity.c
 
 ted: $(OBJ_FILES)
-	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
+	$(CC) $(CFLAGS) $(INC) -o $(SRC_DIR)/$@ $^ -lm
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
+	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 tstall: tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry tst_geo_calc tst_svg
@@ -55,8 +55,9 @@ tst_svg: tst/t_svg.c $(OBJ_DIR)/svg.o $(UNITY)
 	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
 
 clean:
-	-del /Q $(OBJ_DIR)\*.o 2>nul
-	-del /Q ted.exe tst_hashfile.exe tst_quadra.exe tst_habitante.exe tst_geo.exe tst_pm.exe tst_qry.exe tst_geo_calc.exe tst_svg.exe 2>nul
-	-del /Q *.hf *.hfd 2>nul
+	rm -f $(OBJ_DIR)/*.o
+	rm -f $(SRC_DIR)/ted
+	rm -f tst_hashfile tst_quadra tst_habitante tst_geo tst_pm tst_qry tst_geo_calc tst_svg
+	rm -f *.hf *.hfd
 
 .PHONY: tstall clean
