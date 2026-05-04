@@ -10,7 +10,6 @@ OBJ_FILES = $(patsubst %.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 
 UNITY    = ../unity/unity.c
 
-# O executável principal deve estar dentro de /src (onde este makefile reside)
 ted: $(OBJ_FILES)
 	$(CC) $(CFLAGS) $(INC) -o $@ $^ -lm
 
